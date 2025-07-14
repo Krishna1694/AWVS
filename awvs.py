@@ -1,0 +1,1 @@
+print("Best scanner of all time")
