@@ -3,10 +3,11 @@ from tkinter import filedialog, messagebox
 import re
 
 class ScanPage(tk.Frame):
-    def __init__(self, master, switch_to_welcome_page):
+    def __init__(self, master, switch_to_welcome_page, start_scan_callback):
         super().__init__(master)
         self.master = master
         self.switch_to_welcome_page = switch_to_welcome_page
+        self.start_scan_callback = start_scan_callback
 
         self.payload_selected = {cat: False for cat in ['SQLi', 'XSS', 'CMD', 'HTML']}
         self.uploaded_files = {cat: None for cat in ['SQLi', 'XSS', 'CMD', 'HTML']}
@@ -55,6 +56,7 @@ class ScanPage(tk.Frame):
         url = self.url_entry.get().strip()
         if self.start_btn['state'] == 'normal':
             print(f"Scan started for: {url}")
+            self.start_scan_callback()  
         else:
             messagebox.showwarning("Invalid URL", "Please enter a valid URL before starting the scan.")
 
@@ -194,3 +196,4 @@ class ScanPage(tk.Frame):
         if not self.url_entry.get():
             self.url_entry.insert(0, "e.g., https://example.com")
             self.url_entry.config(fg="gray")
+
