@@ -1,0 +1,7 @@
+#env
+awvs-venv
+
+__pycache__
+
+#tests
+test.py
