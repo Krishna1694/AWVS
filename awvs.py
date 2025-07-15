@@ -1,6 +1,7 @@
 import tkinter as tk
 from homepage import WelcomePage
 from scanpage import ScanPage
+# from resultspage import ResultsPage  # Example of how you’d add more
 
 class App(tk.Tk):
     def __init__(self):
@@ -10,18 +11,20 @@ class App(tk.Tk):
 
         self.frames = {}
 
-        self.frames["WelcomePage"] = WelcomePage(self, self.show_scan_page)
-        self.frames["ScanPage"] = ScanPage(self, self.show_welcome_page)
+        # Register all pages here
+        self.frames["WelcomePage"] = WelcomePage(self, lambda: self.show_frame("ScanPage"))
+        self.frames["ScanPage"] = ScanPage(self, lambda: self.show_frame("WelcomePage"))
+        # self.frames["ResultsPage"] = ResultsPage(self, ...)  # Example
 
-        self.frames["WelcomePage"].pack(fill="both", expand=True)
+        # Show the first page
+        self.show_frame("WelcomePage")
 
-    def show_scan_page(self):
-        self.frames["WelcomePage"].pack_forget()
-        self.frames["ScanPage"].pack(fill="both", expand=True)
-
-    def show_welcome_page(self):
-        self.frames["ScanPage"].pack_forget()
-        self.frames["WelcomePage"].pack(fill="both", expand=True)
+    def show_frame(self, page_name):
+        # Hide all pages
+        for frame in self.frames.values():
+            frame.pack_forget()
+        # Show selected page
+        self.frames[page_name].pack(fill="both", expand=True)
 
 if __name__ == "__main__":
     app = App()
