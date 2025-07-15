@@ -2,11 +2,11 @@ import tkinter as tk
 from tkinter import filedialog, simpledialog
 
 class ScanPage(tk.Frame):
-    def __init__(self, master, switch_to_welcome_page):
+    def __init__(self, master, switch_to_welcome_page, start_scan_callback):
         super().__init__(master)
         self.master = master
         self.switch_to_welcome_page = switch_to_welcome_page
-
+        self.start_scan_callback = start_scan_callback  # <-- Add this
         self.payload_selected = {
             'SQLi': False,
             'XSS': False,
@@ -15,6 +15,8 @@ class ScanPage(tk.Frame):
         }
 
         self.create_widgets()
+
+
 
     def create_widgets(self):
         tk.Label(self, text="Enter your target URL", font=("Helvetica", 16)).pack(pady=20)
@@ -32,13 +34,15 @@ class ScanPage(tk.Frame):
         tk.Button(payload_frame, text="Custom", width=12, command=self.open_custom_payload_popup).pack(side="right", padx=10)
 
         # Bottom buttons
+       
         action_frame = tk.Frame(self)
         action_frame.pack(side="bottom", fill="x", pady=20)
 
         tk.Button(action_frame, text="Back", width=12, font=("Helvetica", 15), command=self.switch_to_welcome_page)\
             .pack(side="left", padx=30, anchor="sw")
-        tk.Button(action_frame, text="Start Scan", width=12, font=("Helvetica", 15), command=self.start_scan)\
+        tk.Button(action_frame, text="Start Scan", width=12, font=("Helvetica", 15), command=self.start_scan_callback)\
             .pack(side="right", padx=30, anchor="se")
+
 
     def start_scan(self):
         url = self.url_entry.get()
