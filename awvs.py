@@ -39,8 +39,8 @@ class App(tk.Tk):
             self.selected_payloads = {
                 "SQLi": default_payloads["SQLi"],
                 "XSS": default_payloads["XSS"],
-                "CMD": [],
-                "HTML": []
+                "CMD": default_payloads["CMD"],
+                "HTML": default_payloads["HTML"]
             }
             self.show_scanning_page()
 
