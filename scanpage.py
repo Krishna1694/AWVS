@@ -43,6 +43,9 @@ class ScanPage(tk.Frame):
         self.start_btn = tk.Button(action_frame, text="Start Scan", width=12, font=("Helvetica", 15),
                                    command=self.start_scan, state="disabled")
         self.start_btn.pack(side="right", padx=30, anchor="se")
+        tk.Button(action_frame, text="Demo Scan", width=12, font=("Helvetica", 12), command=self.run_demo).pack(
+            side="right", padx=10, anchor="se"
+        )
 
     def validate_url(self, event=None):
         url = self.url_entry.get().strip()
@@ -197,3 +200,24 @@ class ScanPage(tk.Frame):
             self.url_entry.insert(0, "e.g., https://example.com")
             self.url_entry.config(fg="gray")
 
+
+
+# Demo scan
+    def run_demo(self):
+        demo_links = [
+            "http://example.com/page.php?id=1",
+            "http://example.com/search.php?query=test",
+            "http://example.com/view.php?user=guest"
+        ]
+
+        try:
+            temp_file = "./backend/temp_urls.txt"
+            with open(temp_file, "w") as f:
+                for link in demo_links:
+                    f.write(link + "\n")
+
+            print("[*] Demo URLs written to temp file.")
+            self.start_scan_callback(demo_mode=True)
+        except Exception as e:
+            print(f"[!] Failed to run demo: {e}")
+            messagebox.showerror("Demo Error", f"Could not start demo scan.\n{e}")

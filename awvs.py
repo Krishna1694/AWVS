@@ -13,9 +13,9 @@ class App(tk.Tk):
         self.geometry("700x500")
 
         self.frames = {}
-        self.scan_result = ""  # Ensure it's defined
+        self.scan_result = ""
+        self.demo_mode = False  # Default is off
 
-        # Initialize WelcomePage
         self.frames["WelcomePage"] = WelcomePage(self, self.show_scan_page)
         self.frames["WelcomePage"].pack(fill="both", expand=True)
 
@@ -32,9 +32,9 @@ class App(tk.Tk):
     def show_scan_page(self):
         self.clear_frames()
 
-        def start_scan_and_go_to_scanning_page():
+        def start_scan_and_go_to_scanning_page(demo_mode=False):
             url = self.frames["ScanPage"].url_entry.get()
-            print(f"Scan started for: {url}")
+            print(f"Scan started for: {url if not demo_mode else 'Demo Mode (static URLs)'}")
             self.target_url = url
             self.selected_payloads = {
                 "SQLi": default_payloads["SQLi"],
@@ -42,6 +42,7 @@ class App(tk.Tk):
                 "CMD": default_payloads["CMD"],
                 "HTML": default_payloads["HTML"]
             }
+            self.demo_mode = demo_mode  # ✅ Store flag
             self.show_scanning_page()
 
         self.frames["ScanPage"] = ScanPage(
@@ -58,7 +59,8 @@ class App(tk.Tk):
             switch_to_result_page=self.show_result_page,
             stop_scan_callback=self.handle_scan_stop,
             target_url=self.target_url,
-            selected_payloads=self.selected_payloads
+            selected_payloads=self.selected_payloads,
+            demo_mode=self.demo_mode  # ✅ Pass flag to scanning page
         )
         self.frames["ScanningPage"].pack(fill="both", expand=True)
 
@@ -72,7 +74,6 @@ class App(tk.Tk):
 
     def show_result_page(self):
         self.clear_frames()
-        # For testing, mock result if undefined
         if not self.scan_result:
             self.scan_result = "Scan completed.\nNo issues found."
         self.frames["ResultPage"] = ResultPage(

