@@ -53,7 +53,7 @@ class ScanningPage(tk.Frame):
                 self.log_message(f"[✔] Crawl complete. {len(links)} internal links found.")
 
             # Step 2: Save to temp file
-            temp_file = "./backend/_awvs_temp_urls.txt"
+            temp_file = "./backend/temp_urls.txt"
             with open(temp_file, "w") as f:
                 for link in links:
                     f.write(link + "\n")
