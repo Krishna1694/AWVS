@@ -3,7 +3,7 @@ import threading
 import time
 
 from backend.crawler import get_all_links, extract_forms_from_url
-from backend.injector import inject_get_params_from_file, inject_form_payloads
+from backend.injector import scan_access_control, scan_misconfiguration, scan_auth_bypass,scan_ssrf_from_file, inject_get_params_from_file, inject_form_payloads
 
 
 class ScanningPage(tk.Frame):
@@ -80,6 +80,86 @@ class ScanningPage(tk.Frame):
                 if not self.running:
                     self.log_message(f"[!] Scan stopped before {category} test.")
                     return
+
+                # === Access Control Scan ===
+                if category == "AccessControl":
+                    self.log_message("[*] Testing for Broken Access Control (A01)...")
+                    ac_results = scan_access_control(self.target_url, payloads)
+                    for url, result in ac_results:
+                        if not self.running:
+                            return
+                        self.log_message(f"[AccessControl] {url} → {result}")
+                        full_results.append((category, url, result))
+                        if result != "No Issue Detected":
+                            break
+                    continue  # Skip to next category
+
+                # === InsecureDesign Scan ===
+                if category == "InsecureDesign":
+                    from backend.injector import scan_insecure_design
+                    self.log_message("[*] Testing for Insecure Design (A04)...")
+                    id_results = scan_insecure_design(self.target_url, payloads)
+                    for url, result in id_results:
+                        if not self.running:
+                            return
+                        self.log_message(f"[InsecureDesign] {url} → {result}")
+                        full_results.append((category, url, result))
+                        if result != "No Issue Detected":
+                            break
+                    continue  # move to next category
+
+                # === Misconfig Scan ===
+                if category == "Misconfig":
+                    self.log_message("[*] Testing for Security Misconfigurations (A05)...")
+                    misconfig_results = scan_misconfiguration(self.target_url, payloads)
+                    for url, result in misconfig_results:
+                        if not self.running:
+                            return
+                        self.log_message(f"[Misconfig] {url} → {result}")
+                        full_results.append((category, url, result))
+                        if result != "No Issue Detected":
+                            break
+                    continue  # Skip other scans for this category
+
+                # === AuthBypass Scan ===
+                if category == "AuthBypass":
+                    self.log_message("[*] Testing for Authentication Bypass (A07)...")
+                    auth_results = scan_auth_bypass(all_forms, payloads)
+                    for url, method, data, result in auth_results:
+                        if not self.running:
+                            return
+
+                        self.log_message(f"[AuthBypass] {method} → {url}")
+                        self.log_message(f"    Payload: {data}")
+                        self.log_message(f"    Result : {result}\n")
+
+                        payload_summary = ", ".join([f"{k}={v}" for k, v in data.items()])
+                        full_results.append((category, f"{url} ({method}) | Payload: {payload_summary}", result))
+
+                        if result == "Potential Auth Bypass":
+                            break
+
+                    continue  # Skip GET/FORM for this category
+
+                # === SSRF Scan ===
+                if category == "SSRF":
+                    self.log_message("[*] Testing for Server-Side Request Forgery (A10)...")
+                    ssrf_results = scan_ssrf_from_file(temp_file, payloads)
+                    seen_params = set()
+                    for url, param, payload, result in ssrf_results:
+                        if not self.running:
+                            return
+                        key = f"{url}::{param}"
+                        if key in seen_params:
+                            continue
+                        seen_params.add(key)
+
+                        self.log_message(f"[SSRF] {param} → {payload} → {result}")
+                        full_results.append((category, f"{param} = {payload}", result))
+
+                        if result == "Potential SSRF":
+                            break
+                    continue
 
                 # --- GET Injection ---
                 self.log_message(f"[*] Testing GET URLs for {category}...")

@@ -40,7 +40,13 @@ class App(tk.Tk):
                 "SQLi": default_payloads["SQLi"],
                 "XSS": default_payloads["XSS"],
                 "CMD": default_payloads["CMD"],
-                "HTML": default_payloads["HTML"]
+                "HTML": default_payloads["HTML"],
+                "AccessControl": default_payloads["AccessControl"],
+                "SSRF": default_payloads["SSRF"],
+                "AuthBypass": default_payloads["AuthBypass"],
+                "Misconfig": default_payloads["Misconfig"],
+                "LDAPi": default_payloads["LDAPi"],
+                "InsecureDesign": default_payloads["InsecureDesign"],
             }
             self.demo_mode = demo_mode  # ✅ Store flag
             self.show_scanning_page()
