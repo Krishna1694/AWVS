@@ -1,10 +1,7 @@
 #env
-awvs-venv
+awvs
 
 __pycache__
 
 #tests
 test.py
-test_cra.py
-test_inj.py
-temp_urls.txt

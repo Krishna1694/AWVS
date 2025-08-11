@@ -1,67 +1,47 @@
+"""Simple crawler utilities"""
 import requests
-from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
-from collections import deque
+from urllib.parse import urljoin, urlparse
+import time
 
-def get_all_links(base_url, log=None):
+def extract_forms(url, resp_text):
+    soup = BeautifulSoup(resp_text, 'html.parser')
+    forms = []
+    for form in soup.find_all('form'):
+        action = form.get('action') or url
+        action = urljoin(url, action)  # <-- normalize to absolute URL
+        method = (form.get('method') or 'get').lower()
+        inputs = {}
+        for inp in form.find_all(['input','textarea','select']):
+            name = inp.get('name')
+            if not name:
+                continue
+            val = inp.get('value') or ''
+            inputs[name] = val
+        forms.append({'action': action, 'method': method, 'inputs': inputs})
+    return forms
+
+def simple_crawl(start_url, max_depth=1, write_callback=print, stop_flag=lambda: False):
     visited = set()
-    internal_links = set()
-    queue = deque([base_url])
-
-    while queue:
-        url = queue.popleft()
-        if url in visited:
+    to_visit = [(start_url,0)]
+    base = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(start_url))
+    results = []
+    while to_visit:
+        url, depth = to_visit.pop(0)
+        if stop_flag():
+            break
+        if url in visited or depth>max_depth:
             continue
-        visited.add(url)
-
         try:
-            if log: 
-                log(f"[Crawl] Visiting: {url}")
-            response = requests.get(url, timeout=5)
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            for tag in soup.find_all("a", href=True):
-                href = tag.get("href")
-                if href.startswith("mailto:") or href.startswith("javascript:"):
-                    continue
-                full_url = urljoin(url, href)
-                parsed = urlparse(full_url)
-
-                if base_url in full_url and parsed.scheme.startswith("http"):
-                    normalized = parsed.scheme + "://" + parsed.netloc + parsed.path
-                    if normalized not in internal_links:
-                        internal_links.add(normalized)
-                        queue.append(full_url)
-                        if log: 
-                            log(f"[✔] Added: {normalized}")
-
+            r = requests.get(url, timeout=8)
+            visited.add(url)
+            results.append(url)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            for a in soup.find_all('a', href=True):
+                link = urljoin(base, a['href'])
+                if urlparse(link).netloc == urlparse(start_url).netloc and link not in visited:
+                    to_visit.append((link, depth+1))
         except Exception as e:
-            if log: 
-                log(f"[!] Error visiting {url} → {e}")
-
-    return internal_links
-
-
-def extract_forms_from_url(url, log=None):
-    try:
-        response = requests.get(url, timeout=5)
-        soup = BeautifulSoup(response.text, "html.parser")
-        forms = []
-
-        for form in soup.find_all("form"):
-            action = form.get("action")
-            method = form.get("method", "get")
-            inputs = [i.get("name") for i in form.find_all("input") if i.get("name")]
-
-            forms.append({
-                "url": url,
-                "action": action,
-                "method": method,
-                "inputs": inputs
-            })
-
-        return forms
-    except Exception as e:
-        if log: 
-            log(f"[!] Error extracting forms from {url} → {e}")
-        return []
+            write_callback(f'crawl error on {url}: {e}')
+        time.sleep(0.1)
+    return results
