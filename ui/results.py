@@ -14,7 +14,7 @@ class ResultPage(tk.Frame):
 
         grouped = self.group_findings(self.results.get('findings', []))
 
-        # Create scrollable frame for results
+        # Scrollable container
         container = ttk.Frame(self)
         container.pack(fill='both', expand=True, padx=5, pady=5)
 
@@ -24,9 +24,7 @@ class ResultPage(tk.Frame):
 
         scrollable_frame.bind(
             "<Configure>",
-            lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all")
-            )
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
@@ -35,15 +33,19 @@ class ResultPage(tk.Frame):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Populate scrollable frame with grouped results
+        # Populate grouped results
         for owasp_cat, vulns in grouped.items():
             ttk.Label(scrollable_frame, text=owasp_cat, font=(None, 14, 'bold')).pack(anchor='w', padx=10, pady=5)
             for title, data in vulns.items():
                 ttk.Label(scrollable_frame, text=f"{title} ({data['severity']})", font=(None, 12)).pack(anchor='w', padx=20)
-                for ep in data['endpoints']:
-                    ttk.Label(scrollable_frame, text=f"- {ep}").pack(anchor='w', padx=40)
+                for f in data['findings']:
+                    ep_line = f"- {f['url']}"
+                    if f.get('param'):
+                        ep_line += f" (field: {f['param']})"
+                    ttk.Label(scrollable_frame, text=ep_line).pack(anchor='w', padx=40)
+                    ttk.Label(scrollable_frame, text=f"    Description: {f['detail']}").pack(anchor='w', padx=60)
 
-        # Buttons stay outside the scrollable area
+        # Buttons
         btn_frame = ttk.Frame(self)
         btn_frame.pack(pady=8)
         ttk.Button(btn_frame, text='Export as TXT', command=lambda: self.export_txt(grouped)).pack(side='left', padx=5)
@@ -51,15 +53,16 @@ class ResultPage(tk.Frame):
         ttk.Button(btn_frame, text='Back', command=lambda: app.show_welcome()).pack(side='left', padx=5)
 
     def group_findings(self, findings):
-        grouped = defaultdict(lambda: defaultdict(lambda: {'severity': None, 'endpoints': [], 'detail': None}))
+        grouped = defaultdict(lambda: defaultdict(lambda: {'severity': None, 'findings': []}))
         for f in findings:
             owasp_cat = f.get('owasp', 'Unmapped')
             title = f.get('title', 'Unknown')
             grouped[owasp_cat][title]['severity'] = f.get('severity', '')
-            grouped[owasp_cat][title]['detail'] = f.get('detail', '')
-            ep = f.get('url') or f.get('param') or ''
-            if ep and ep not in grouped[owasp_cat][title]['endpoints']:
-                grouped[owasp_cat][title]['endpoints'].append(ep)
+            grouped[owasp_cat][title]['findings'].append({
+                'url': f.get('url') or '',
+                'param': f.get('param'),
+                'detail': f.get('detail', '')
+            })
         return grouped
 
     def export_txt(self, grouped):
@@ -76,9 +79,13 @@ class ResultPage(tk.Frame):
                         f.write(f"  Finding: {title}\n")
                         f.write(f"  Severity: {data['severity']}\n")
                         f.write("  Endpoints:\n")
-                        for ep in data['endpoints']:
-                            f.write(f"    - {ep}\n")
-                        f.write(f"  Description: {data['detail']}\n\n")
+                        for fd in data['findings']:
+                            ep_line = f"    - {fd['url']}"
+                            if fd.get('param'):
+                                ep_line += f" (field: {fd['param']})"
+                            f.write(ep_line + "\n")
+                            f.write(f"      Description: {fd['detail']}\n")
+                        f.write("\n")
             messagebox.showinfo('Saved', f'Saved to {path}')
         except Exception as e:
             messagebox.showerror('Error', str(e))
@@ -103,9 +110,12 @@ class ResultPage(tk.Frame):
                     pdf.multi_cell(0, 6, f"Finding: {title} ({data['severity']})")
                     pdf.set_font('Arial', '', 11)
                     pdf.multi_cell(0, 6, "Endpoints:")
-                    for ep in data['endpoints']:
-                        pdf.multi_cell(0, 6, f"  - {ep}")
-                    pdf.multi_cell(0, 6, f"Description: {data['detail']}\n")
+                    for fd in data['findings']:
+                        ep_line = f"  - {fd['url']}"
+                        if fd.get('param'):
+                            ep_line += f" (field: {fd['param']})"
+                        pdf.multi_cell(0, 6, ep_line)
+                        pdf.multi_cell(0, 6, f"    Description: {fd['detail']}")
                     pdf.ln(1)
             pdf.output(path)
             messagebox.showinfo('Saved', f'Saved to {path}')
