@@ -1,14 +1,19 @@
 import tkinter as tk
+import os
 from ui.welcome import WelcomePage
 from ui.scan import ScanPage
 from ui.scanning import ScanningPage
 from ui.results import ResultPage
 from backend.scanner_core import ScannerCore
 
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("MiniVulnScanner")
+        self.iconphoto(False, tk.PhotoImage(file=os.path.join(ASSETS_DIR, "logo.png")))
+        self.title("Advanced Web Vulnerability Scanner")
         self.geometry("800x600")
         self.scanner = ScannerCore()
         self._frame = None
