@@ -1,7 +1,14 @@
 #env
 awvs
-
 __pycache__
+
+#assets
+Team-65-Project.zip
+
+#Compiles
+app.spec
+build
+dist
 
 #tests
 test.py
