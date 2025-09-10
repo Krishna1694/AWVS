@@ -119,8 +119,8 @@ This is a minimal, educational web vulnerability scanner with a **Tkinter GUI**,
 
 ## References
 
-- OWASP Top 10
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
     
 - [sqlmap](https://github.com/sqlmapproject/sqlmap)
     
-- ZAP Proxy
+- [ZAP Proxy](https://www.zaproxy.org/)
